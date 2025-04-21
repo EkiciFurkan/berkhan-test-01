@@ -180,6 +180,10 @@ const config = {
         "fromEnvVar": null,
         "value": "darwin-arm64",
         "native": true
+      },
+      {
+        "fromEnvVar": null,
+        "value": "rhel-openssl-3.0.x"
       }
     ],
     "previewFeatures": [],
@@ -197,16 +201,17 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
         "fromEnvVar": "DATABASE_URL",
-        "value": "postgres://neondb_owner:npg_mlQzCHVKh57y@ep-withered-bush-a2xdhhh8-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require"
+        "value": null
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Brand {\n  id        Int      @id @default(autoincrement())\n  name      String   @unique\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  series    Series[]\n  cars      Car[]\n}\n\nmodel Series {\n  id        Int      @id @default(autoincrement())\n  name      String\n  brandId   Int\n  brand     Brand    @relation(fields: [brandId], references: [id])\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  cars      Car[]\n\n  @@unique([name, brandId])\n}\n\nmodel FuelType {\n  id        Int      @id @default(autoincrement())\n  name      String   @unique\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  cars      Car[]\n}\n\nmodel BodyType {\n  id        Int      @id @default(autoincrement())\n  name      String   @unique\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  cars      Car[]\n}\n\nmodel Car {\n  id          Int      @id @default(autoincrement())\n  title       String\n  year        Int\n  brandId     Int\n  brand       Brand    @relation(fields: [brandId], references: [id])\n  seriesId    Int?\n  series      Series?  @relation(fields: [seriesId], references: [id])\n  fuelTypeId  Int\n  fuelType    FuelType @relation(fields: [fuelTypeId], references: [id])\n  bodyTypeId  Int\n  bodyType    BodyType @relation(fields: [bodyTypeId], references: [id])\n  price       Float\n  mileage     Int?\n  imageUrl    String?\n  description String?  @db.Text\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n\n  @@index([year])\n  @@index([brandId])\n  @@index([seriesId])\n  @@index([fuelTypeId])\n  @@index([bodyTypeId])\n}\n",
-  "inlineSchemaHash": "90783c211a9e889985e07d9256a7f8df573e2b3ce16e7e1686a1a81b6af2c41c",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider      = \"prisma-client-js\"\n  output        = \"../src/generated/prisma\"\n  binaryTargets = [\"native\", \"rhel-openssl-3.0.x\"]\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Brand {\n  id        Int      @id @default(autoincrement())\n  name      String   @unique\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  series    Series[]\n  cars      Car[]\n}\n\nmodel Series {\n  id        Int      @id @default(autoincrement())\n  name      String\n  brandId   Int\n  brand     Brand    @relation(fields: [brandId], references: [id])\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  cars      Car[]\n\n  @@unique([name, brandId])\n}\n\nmodel FuelType {\n  id        Int      @id @default(autoincrement())\n  name      String   @unique\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  cars      Car[]\n}\n\nmodel BodyType {\n  id        Int      @id @default(autoincrement())\n  name      String   @unique\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  cars      Car[]\n}\n\nmodel Car {\n  id          Int      @id @default(autoincrement())\n  title       String\n  year        Int\n  brandId     Int\n  brand       Brand    @relation(fields: [brandId], references: [id])\n  seriesId    Int?\n  series      Series?  @relation(fields: [seriesId], references: [id])\n  fuelTypeId  Int\n  fuelType    FuelType @relation(fields: [fuelTypeId], references: [id])\n  bodyTypeId  Int\n  bodyType    BodyType @relation(fields: [bodyTypeId], references: [id])\n  price       Float\n  mileage     Int?\n  imageUrl    String?\n  description String?  @db.Text\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n\n  @@index([year])\n  @@index([brandId])\n  @@index([seriesId])\n  @@index([fuelTypeId])\n  @@index([bodyTypeId])\n}\n",
+  "inlineSchemaHash": "8c6fd626c44404d510dee0a8fed10aa57388b5fa3d0eba2fecbd268a13e6ed2d",
   "copyEngine": true
 }
 
@@ -247,6 +252,10 @@ Object.assign(exports, Prisma)
 // file annotations for bundling tools to include these files
 path.join(__dirname, "libquery_engine-darwin-arm64.dylib.node");
 path.join(process.cwd(), "src/generated/prisma/libquery_engine-darwin-arm64.dylib.node")
+
+// file annotations for bundling tools to include these files
+path.join(__dirname, "libquery_engine-rhel-openssl-3.0.x.so.node");
+path.join(process.cwd(), "src/generated/prisma/libquery_engine-rhel-openssl-3.0.x.so.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
 path.join(process.cwd(), "src/generated/prisma/schema.prisma")
