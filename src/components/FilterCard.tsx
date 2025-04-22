@@ -21,7 +21,7 @@ export function FilterCard({
 							   loading
 						   }: FilterCardProps) {
 	return (
-		<div className="w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow overflow-hidden">
+		<div className="w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow overflow-hidden" style={{ minWidth: "400px" }}>
 			<div className="p-3 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
 				<h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">{title}</h3>
 			</div>

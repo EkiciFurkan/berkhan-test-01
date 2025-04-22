@@ -45,7 +45,16 @@ export function FilterContainer() {
 			</div>
 
 			{/* Filtre kartları */}
-			<div className="flex overflow-x-auto gap-4 pb-4 pt-10 px-2">
+			<div
+				className="flex gap-4 pb-4 pt-10 px-2"
+				style={{
+					width: "100%",
+					overflowX: "auto",
+					WebkitOverflowScrolling: "touch",
+					scrollbarWidth: "thin",
+					msOverflowStyle: "none"
+				}}
+			>
 				{/* Markalar */}
 				<FilterCard
 					title="Marka"
