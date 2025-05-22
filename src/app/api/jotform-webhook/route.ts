@@ -1,86 +1,71 @@
-// app/api/jotform-webhook/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-// Gelen JotForm verisi için daha spesifik bir tip (eğer biliniyorsa) veya genel bir Record
-type JotFormRawData = {
-	formID?: string;
-	submissionID?: string;
-	formTitle?: string;
-	submissionDate?: string;
-	ip?: string;
-	[key: string]: any; 
-};
+type RawRequestData = Record<string, unknown>;
 
 type JotFormSubmission = {
 	formID: string;
 	submissionID: string;
 	formTitle: string;
-	submissionDate: string;
+	submissionDate: string; 
 	ip: string;
-	formData: Record<string, any>; // Formun içindeki cevaplar için
+	formData: RawRequestData;
 };
 
 export async function POST(request: NextRequest) {
 	try {
-		// Önce ham isteği metin olarak alıp loglayalım
-		const rawBody: string = await request.text();
-		console.log("Raw JotForm webhook body:", rawBody);
+		const multiPartFormData: FormData = await request.formData();
 
-		let parsedData: JotFormRawData;
+		const formIDValue: FormDataEntryValue | null = multiPartFormData.get("formID");
+		const submissionIDValue: FormDataEntryValue | null = multiPartFormData.get("submissionID");
+		const formTitleValue: FormDataEntryValue | null = multiPartFormData.get("formTitle");
+		const ipValue: FormDataEntryValue | null = multiPartFormData.get("ip");
+		const rawRequestValue: FormDataEntryValue | null = multiPartFormData.get("rawRequest");
+
+		if (!formIDValue || typeof formIDValue !== 'string' ||
+			!submissionIDValue || typeof submissionIDValue !== 'string' ||
+			!rawRequestValue || typeof rawRequestValue !== 'string') {
+			return NextResponse.json(
+				{ success: false, message: "Eksik veya geçersiz JotForm verisi (formID, submissionID, veya rawRequest eksik/hatalı tip)" },
+				{ status: 400 }
+			);
+		}
+
+		let parsedRawRequest: RawRequestData;
 		try {
-			// Ham metni JSON olarak ayrıştırmaya çalışalım
-			parsedData = JSON.parse(rawBody) as JotFormRawData;
-		} catch (parseError: unknown) { // Hata tipini unknown olarak yakala
-			console.error("JSON parsing error:", parseError);
-			// Eğer parseError bir Error instance ise mesajını kullan, değilse genel bir mesaj
-			const errorMessage: string = parseError instanceof Error ? parseError.message : "Unknown parsing error";
+			parsedRawRequest = JSON.parse(rawRequestValue) as RawRequestData;
+		} catch (parseError: unknown) {
+			const errorMessage: string = parseError instanceof Error ? parseError.message : "Unknown JSON parsing error for rawRequest";
+			console.error("rawRequest JSON parsing error:", parseError);
 			return NextResponse.json(
 				{
 					success: false,
-					message: "Geçersiz veri formatı. JotForm'dan JSON bekleniyordu.",
+					message: "JotForm 'rawRequest' alanı JSON olarak ayrıştırılamadı.",
 					errorDetails: errorMessage,
-					receivedBodySnippet: rawBody.substring(0, 200) + "..." // Gelen verinin bir kısmını logla
+					rawRequestContent: rawRequestValue.substring(0, 500) + "..."
 				},
 				{ status: 400 }
 			);
 		}
 
-		// Gelen veriyi kontrol et (parsedData üzerinden)
-		if (!parsedData || !parsedData.formID || !parsedData.submissionID) {
-			return NextResponse.json(
-				{ success: false, message: "Geçersiz veya eksik JotForm verisi (formID veya submissionID eksik)" },
-				{ status: 400 }
-			);
-		}
-
-		// JotForm verilerini yapılandırılmış bir formata dönüştür
-		// formID, submissionID gibi bilinen alanları ayır, geri kalanını formData içine al
-		const {
-			formID,
-			submissionID,
-			formTitle,
-			submissionDate,
-			ip,
-			...actualFormData // Geri kalan tüm alanlar actualFormData içine toplanır
-		} = parsedData;
-
 		const submission: JotFormSubmission = {
-			formID: String(formID), // Gelen verinin string olduğundan emin olalım
-			submissionID: String(submissionID),
-			formTitle: String(formTitle || "Bilinmeyen Form"),
-			submissionDate: String(submissionDate || new Date().toISOString()),
-			ip: String(ip || request.headers.get("x-forwarded-for") || "unknown"),
-			formData: actualFormData // Kalan tüm alanlar form verisi olarak kabul edilir
+			formID: formIDValue,
+			submissionID: submissionIDValue,
+			formTitle: typeof formTitleValue === 'string' ? formTitleValue : "Bilinmeyen Form",
+			submissionDate: new Date().toISOString(),
+			ip: typeof ipValue === 'string' ? ipValue : (request.headers.get("x-forwarded-for") || "unknown"),
+			formData: parsedRawRequest
 		};
 
-		console.log("JotForm verisi alındı ve işlendi:", submission);
+		console.log("JotForm verisi (multipart) alındı ve işlendi:", submission);
+
 
 		return NextResponse.json({
 			success: true,
 			message: "Form verisi başarıyla alındı",
 			data: { id: submission.submissionID }
 		});
-	} catch (error: unknown) { // Hata tipini unknown olarak yakala
+
+	} catch (error: unknown) {
 		console.error("JotForm webhook genel hatası:", error);
 		const errorMessage: string = error instanceof Error ? error.message : "Bilinmeyen bir sunucu hatası oluştu";
 		return NextResponse.json(
@@ -90,7 +75,6 @@ export async function POST(request: NextRequest) {
 	}
 }
 
-// GET, PUT, DELETE metodları aynı kalır
 export async function GET() {
 	return NextResponse.json(
 		{ success: false, message: "Method Not Allowed" },
